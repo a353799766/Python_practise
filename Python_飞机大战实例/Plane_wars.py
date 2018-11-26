@@ -1,8 +1,8 @@
-"""飞机大战第一个版本:显示窗口和背景"""
+"""自学飞机大战项目练习"""
 
 
 import pygame
-import time
+# import time
 
 
 def main():
