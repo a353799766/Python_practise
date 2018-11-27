@@ -8,15 +8,21 @@ from pygame.locals import *  # 用来检测事件，比如键盘按键操作
 
 class Hero(object):
     """定义我方飞机类"""
-    def __init__(self):
+    def __init__(self, screen):
         self.x = 140
         self.y = 488
+        self.screen = screen
+        self.bullet_list = []
         self.image = pygame.image.load(
             "./spritesheets/hero_fly_1.png")  # 创建一个我方飞机的图片，和上面一样
 
     # 在窗口显示飞机
-    def display(self, screen_temp):
-        screen_temp.blit(self.image, (self.x, self.y))
+    def display(self):
+        self.screen.blit(self.image, (self.x, self.y))
+        # 显示子弹,为什么写在这里，而不是写在shoot方法里,如果写在shoot里，只会显示一次就消失
+        for bullet in self.bullet_list:
+            bullet.display()
+            bullet.move()
 
     # 以下4个方法是控制上下左右
     def move_right(self):
@@ -31,19 +37,31 @@ class Hero(object):
     def move_up(self):
         self.y -= 5
 
+    def shoot(self):
+        # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
+        self.bullet_list.append(Bullets(self.screen, self.x, self.y))
+
 
 class Bullets(object):
-    def __init__(self):
-        self.x = 140
-        self.y = 488
+    """定义子弹类"""
+    def __init__(self, screen, x, y):
+        # x，y经过下方计算后，子弹才会在飞机的正上方显示
+        self.x = x + 34
+        self.y = y - 20
+        self.screen = screen
         self.image = pygame.image.load(
             "./spritesheets/bullet1.png")  # 创建一个子弹图片，和上面一样
 
-    def display(self, screen_temp):
-        screen_temp.blit(self.image, (self.x, self.y))
+    def display(self):
+        """显示子弹"""
+        self.screen.blit(self.image, (self.x, self.y))
+
+    def move(self):
+        """通过while和空格键控制移动子弹"""
+        self.y -= 5
 
 
-def key_control(hero_temp,):
+def key_control(hero_temp):
     """控制键盘的函数"""
     for event in pygame.event.get():
         # 判断是否是点击了退出按钮
@@ -69,7 +87,7 @@ def key_control(hero_temp,):
             # 检测按键是否是空格键
             elif event.key == K_SPACE:
                 print('space')
-                pass  # 这里应该是飞机.显示子弹方法（）
+                hero_temp.shoot()  # 这里应该是飞机.显示子弹方法（）
 
 
 def main():
@@ -77,13 +95,12 @@ def main():
     screen = pygame.display.set_mode((320, 568), 0, 32)
     # 2.创建一个跟窗口大小一致的图片，用来填充当背景
     background = pygame.image.load("./spritesheets/background_2.png")
-    hero = Hero()  # 创建我方飞机英雄对象
-    bullets = Bullets()
+    hero = Hero(screen)  # 创建我方飞机英雄对象
     while True:
         # 设定需要显示的图在窗口中哪个位置显示
         screen.blit(background, (0, 0))
         # 我方飞机英雄显示
-        hero.display(screen)
+        hero.display()
         # 获取事件，比如按键等
         key_control(hero)
         # 更新需要显示的内容
