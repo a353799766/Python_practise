@@ -8,6 +8,7 @@ from pygame.locals import *  # 用来检测事件，比如键盘按键操作
 
 class Hero(object):
     """定义我方飞机类"""
+
     def __init__(self, screen):
         self.x = 140
         self.y = 488
@@ -44,6 +45,7 @@ class Hero(object):
 
 class Bullets(object):
     """定义子弹类"""
+
     def __init__(self, screen, x, y):
         # x，y经过下方计算后，子弹才会在飞机的正上方显示
         self.x = x + 34
@@ -59,6 +61,35 @@ class Bullets(object):
     def move(self):
         """通过while和空格键控制移动子弹"""
         self.y -= 5
+
+
+class Enemy(object):
+    """定义敌方飞机类"""
+
+    def __init__(self, screen):
+        self.x = 0
+        self.y = 0
+        self.screen = screen
+        self.image = pygame.image.load(
+            "./spritesheets/enemy1_fly_1.png")  # 创建一个地方飞机的图片，和上面一样
+        self.position = "right"
+
+    # 在窗口显示飞机
+    def display(self):
+        self.screen.blit(self.image, (self.x, self.y))
+
+    def move(self):
+        """移动敌机，并判断敌机的边界值"""
+        if self.position == "right":
+            self.x += 2
+            # self.y += 1
+        elif self.position == "left":
+            self.x -= 2
+            # self.y += 1
+        if self.x > 320 - 38:
+            self.position = "left"
+        elif self.x < 0:
+            self.position = "right"
 
 
 def key_control(hero_temp):
@@ -96,11 +127,15 @@ def main():
     # 2.创建一个跟窗口大小一致的图片，用来填充当背景
     background = pygame.image.load("./spritesheets/background_2.png")
     hero = Hero(screen)  # 创建我方飞机英雄对象
+    enemy = Enemy(screen)
     while True:
         # 设定需要显示的图在窗口中哪个位置显示
         screen.blit(background, (0, 0))
         # 我方飞机英雄显示
         hero.display()
+        # 敌方飞机显示
+        enemy.move()
+        enemy.display()
         # 获取事件，比如按键等
         key_control(hero)
         # 更新需要显示的内容
