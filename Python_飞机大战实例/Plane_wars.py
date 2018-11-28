@@ -53,12 +53,7 @@ class Hero(BasePlane):
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
         self.bullet_list.append(
-            Bullets(
-                self.screen,
-                self.x,
-                self.y,
-                self,
-                self.bullet_list))
+            Bullets(self.screen, self.x, self.y, self, self.bullet_list))
 
 
 class Enemy(BasePlane):
@@ -81,10 +76,8 @@ class Enemy(BasePlane):
         """移动敌机，并判断敌机的边界值"""
         if self.position == "right":
             self.x += 2
-            # self.y += 1
         elif self.position == "left":
             self.x -= 2
-            # self.y += 1
         if self.x > 320 - 38:
             self.position = "left"
         elif self.x < 0:
@@ -96,21 +89,15 @@ class Enemy(BasePlane):
         random_num = random.randint(1, 400)
         if random_num == 32 or random_num == 111:
             self.bullet_list.append(
-                EnemyBullets(
-                    self.screen,
-                    self.x,
-                    self.y,
-                    self,
-                    self.bullet_list))
+                EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
 
 
 class BaseBullet(object):
     def __init__(self, x, y, screen, image_path, plane_temp, bullet_list):
-        # x，y经过下方计算后，子弹才会在飞机的正上方显示
         self.x = x
         self.y = y
         self.screen = screen
-        self.image = pygame.image.load(image_path)  # 创建一个子弹图片，和上面一样
+        self.image = pygame.image.load(image_path)  # 创建一个子弹图片
         self.plane = plane_temp
         self.bullet_list = bullet_list
 
@@ -124,7 +111,6 @@ class BaseBullet(object):
 
 class Bullets(BaseBullet):
     """定义我方飞机子弹类"""
-
     def __init__(self, screen, x, y, hero, bullet_list):
         BaseBullet.__init__(self, x + 34, y - 20, screen, "./spritesheets/bullet1.png", hero, bullet_list)
 
@@ -135,7 +121,6 @@ class Bullets(BaseBullet):
 
 class EnemyBullets(BaseBullet):
     """定义敌方飞机子弹类"""
-
     def __init__(self, screen, x, y, enemy, bullet_list):
         BaseBullet.__init__(self, x+19, y+30, screen, "./spritesheets/bullet2.png", enemy, bullet_list)
 
