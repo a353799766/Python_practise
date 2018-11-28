@@ -17,15 +17,22 @@ class Hero(object):
         self.image = pygame.image.load(
             "./spritesheets/hero_fly_1.png")  # 创建一个我方飞机的图片，和上面一样
 
-    # 在窗口显示飞机，并显示射击子弹
+    # 在窗口显示飞机
     def display(self):
         self.screen.blit(self.image, (self.x, self.y))
+        # ⽤来存放需要删除的对象引⽤
+        needDelItemList = []
+        # 保存需要删除的对象
+        for i in self.bullet_list:
+            if i.judge():
+                needDelItemList.append(i)
+        # 删除self.bulletList中需要删除的对象
+        for i in needDelItemList:
+            self.bullet_list.remove(i)
         # 显示子弹,为什么写在这里，而不是写在shoot方法里,如果写在shoot里，只会显示一次就消失
         for bullet in self.bullet_list:
             bullet.display()
             bullet.move()
-            if bullet.y < 0:
-                bullet.delete()  # 调用删除子弹的方法
 
     # 以下4个方法是控制上下左右
     def move_right(self):
@@ -42,21 +49,19 @@ class Hero(object):
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
-        self.bullet_list.append(Bullets(self.screen, self.x, self.y, self, self.bullet_list))
+        self.bullet_list.append(Bullets(self.screen, self.x, self.y))
 
 
 class Bullets(object):
     """定义子弹类"""
 
-    def __init__(self, screen, x, y, hero, bullet_list):
+    def __init__(self, screen, x, y):
         # x，y经过下方计算后，子弹才会在飞机的正上方显示
         self.x = x + 34
         self.y = y - 20
         self.screen = screen
         self.image = pygame.image.load(
             "./spritesheets/bullet1.png")  # 创建一个子弹图片，和上面一样
-        self.hero = hero
-        self.bullet_list = bullet_list
 
     def display(self):
         """显示子弹"""
@@ -66,8 +71,11 @@ class Bullets(object):
         """通过while和空格键控制移动子弹"""
         self.y -= 5
 
-    def delete(self):
-        self.bullet_list.remove(self)
+    def judge(self):
+        if self.y < 0:
+            return True
+        else:
+            return False
 
 
 class Enemy(object):
