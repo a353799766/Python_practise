@@ -24,8 +24,9 @@ class BasePlane(object):
 class Hero(BasePlane):
     """定义我方飞机类"""
 
-    def __init__(self, screen):
+    def __init__(self, screen, enemy_temp):
         BasePlane.__init__(self, 140, 488, screen, "./spritesheets/hero_fly_1.png")
+        self.enemy =enemy_temp
 
     # 在窗口显示飞机，并显示射击子弹
     def display(self):
@@ -52,8 +53,7 @@ class Hero(BasePlane):
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
-        self.bullet_list.append(
-            Bullets(self.screen, self.x, self.y, self, self.bullet_list))
+        self.bullet_list.append(Bullets(self.screen, self.x, self.y, self, self.bullet_list, self.enemy))
 
 
 class Enemy(BasePlane):
@@ -62,7 +62,7 @@ class Enemy(BasePlane):
     def __init__(self, screen):
         BasePlane.__init__(self, 0, 0, screen, "./spritesheets/enemy1_fly_1.png")
         self.position = "right"
-
+        self.flag = 0
     # 在窗口显示飞机
     def display(self):
         BasePlane.display(self)
@@ -74,23 +74,31 @@ class Enemy(BasePlane):
 
     def move(self):
         """移动敌机，并判断敌机的边界值"""
-        if self.position == "right":
-            self.x += 2
-        elif self.position == "left":
-            self.x -= 2
-        if self.x > 320 - 38:
-            self.position = "left"
-        elif self.x < 0:
-            self.position = "right"
+        if self.flag == 0:
+            if self.position == "right":
+                self.x += 2
+            elif self.position == "left":
+                self.x -= 2
+            if self.x > 320 - 38:
+                self.position = "left"
+            elif self.x < 0:
+                self.position = "right"
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
         # 利用random来控制发射子弹
-        random_num = random.randint(1, 400)
-        if random_num == 32 or random_num == 111:
-            self.bullet_list.append(
-                EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
+        if self.flag == 0:
+            random_num = random.randint(1, 400)
+            if random_num == 32 or random_num == 111:
+                self.bullet_list.append(
+                    EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
 
+    def delete(self):
+        # 在窗口外显示,并停止移动
+        self.x = -100
+        self.y = -100
+        self.flag = 1
+        # 取消发射子弹
 
 class BaseBullet(object):
     def __init__(self, x, y, screen, image_path, plane_temp, bullet_list):
@@ -111,12 +119,23 @@ class BaseBullet(object):
 
 class Bullets(BaseBullet):
     """定义我方飞机子弹类"""
-    def __init__(self, screen, x, y, hero, bullet_list):
+    def __init__(self, screen, x, y, hero, bullet_list, enemy_temp):
         BaseBullet.__init__(self, x + 34, y - 20, screen, "./spritesheets/bullet1.png", hero, bullet_list)
+        self.enemy = enemy_temp
 
     def move(self):
         """通过while和空格键控制移动子弹"""
-        self.y -= 5
+        self.y -= 3
+        # 判断子弹的xy对应飞机的xy
+        if self.x< self.enemy.x+38 and self.x > self.enemy.x and self.y>self.enemy.y and self.y<self.enemy.y+84:
+            # 子弹消失，从子弹列表中删除
+            BaseBullet.delete(self)
+            # 爆炸效果，加载敌机的爆炸图
+            self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_1.png")
+            self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_2.png")
+            self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_3.png")
+            # 敌机消失,敌机的加载图片消失
+            self.enemy.delete()
 
 
 class EnemyBullets(BaseBullet):
@@ -162,8 +181,8 @@ def main():
     screen = pygame.display.set_mode((320, 568), 0, 32)
     # 2.创建一个跟窗口大小一致的图片，用来填充当背景
     background = pygame.image.load("./spritesheets/background_2.png")
-    hero = Hero(screen)  # 创建我方飞机英雄对象
     enemy = Enemy(screen)
+    hero = Hero(screen, enemy)  # 创建我方飞机英雄对象
     while True:
         # 设定需要显示的图在窗口中哪个位置显示
         screen.blit(background, (0, 0))
