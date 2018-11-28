@@ -7,20 +7,29 @@ from pygame.locals import *  # 用来检测事件，比如键盘按键操作
 import random
 
 
-class Hero(object):
+class BasePlane(object):
+    """定义飞机的基类"""
+
+    def __init__(self, x, y, screen, image_path):
+        self.x = x
+        self.y = y
+        self.screen = screen
+        self.bullet_list = []
+        self.image = pygame.image.load(image_path)  # 创建一个飞机的图片
+
+    def display(self):
+        self.screen.blit(self.image, (self.x, self.y))
+
+
+class Hero(BasePlane):
     """定义我方飞机类"""
 
     def __init__(self, screen):
-        self.x = 140
-        self.y = 488
-        self.screen = screen
-        self.bullet_list = []
-        self.image = pygame.image.load(
-            "./spritesheets/hero_fly_1.png")  # 创建一个我方飞机的图片，和上面一样
+        BasePlane.__init__(self, 140, 488, screen, "./spritesheets/hero_fly_1.png")
 
     # 在窗口显示飞机，并显示射击子弹
     def display(self):
-        self.screen.blit(self.image, (self.x, self.y))
+        BasePlane.display(self)
         # 显示子弹,为什么写在这里，而不是写在shoot方法里,如果写在shoot里，只会显示一次就消失
         for bullet in self.bullet_list:
             bullet.display()
@@ -43,24 +52,25 @@ class Hero(object):
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
-        self.bullet_list.append(Bullets(self.screen, self.x, self.y, self, self.bullet_list))
+        self.bullet_list.append(
+            Bullets(
+                self.screen,
+                self.x,
+                self.y,
+                self,
+                self.bullet_list))
 
 
-class Enemy(object):
+class Enemy(BasePlane):
     """定义敌方飞机类"""
 
     def __init__(self, screen):
-        self.x = 0
-        self.y = 0
-        self.screen = screen
-        self.image = pygame.image.load(
-            "./spritesheets/enemy1_fly_1.png")  # 创建一个地方飞机的图片，和上面一样
+        BasePlane.__init__(self, 0, 0, screen, "./spritesheets/enemy1_fly_1.png")
         self.position = "right"
-        self.bullet_list = []
 
     # 在窗口显示飞机
     def display(self):
-        self.screen.blit(self.image, (self.x, self.y))
+        BasePlane.display(self)
         for bullet in self.bullet_list:
             bullet.display()
             bullet.move()
@@ -85,56 +95,52 @@ class Enemy(object):
         # 利用random来控制发射子弹
         random_num = random.randint(1, 400)
         if random_num == 32 or random_num == 111:
-            self.bullet_list.append(EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
+            self.bullet_list.append(
+                EnemyBullets(
+                    self.screen,
+                    self.x,
+                    self.y,
+                    self,
+                    self.bullet_list))
 
 
-class Bullets(object):
-    """定义我方飞机子弹类"""
-
-    def __init__(self, screen, x, y, hero, bullet_list):
+class BaseBullet(object):
+    def __init__(self, x, y, screen, image_path, plane_temp, bullet_list):
         # x，y经过下方计算后，子弹才会在飞机的正上方显示
-        self.x = x + 34
-        self.y = y - 20
+        self.x = x
+        self.y = y
         self.screen = screen
-        self.image = pygame.image.load(
-            "./spritesheets/bullet1.png")  # 创建一个子弹图片，和上面一样
-        self.hero = hero
+        self.image = pygame.image.load(image_path)  # 创建一个子弹图片，和上面一样
+        self.plane = plane_temp
         self.bullet_list = bullet_list
 
     def display(self):
         """显示子弹"""
         self.screen.blit(self.image, (self.x, self.y))
+
+    def delete(self):
+        self.bullet_list.remove(self)
+
+
+class Bullets(BaseBullet):
+    """定义我方飞机子弹类"""
+
+    def __init__(self, screen, x, y, hero, bullet_list):
+        BaseBullet.__init__(self, x + 34, y - 20, screen, "./spritesheets/bullet1.png", hero, bullet_list)
 
     def move(self):
         """通过while和空格键控制移动子弹"""
         self.y -= 5
 
-    def delete(self):
-        self.bullet_list.remove(self)
 
-
-class EnemyBullets(object):
+class EnemyBullets(BaseBullet):
     """定义敌方飞机子弹类"""
 
     def __init__(self, screen, x, y, enemy, bullet_list):
-        # x，y经过下方计算后，子弹才会在飞机的正上方显示
-        self.x = x + 19
-        self.y = y + 30
-        self.screen = screen
-        self.image = pygame.image.load(
-            "./spritesheets/bullet2.png")  # 创建一个子弹图片，和上面一样
-        self.enemy = enemy
-        self.bullet_list = bullet_list
-
-    def display(self):
-        """显示子弹"""
-        self.screen.blit(self.image, (self.x, self.y))
+        BaseBullet.__init__(self, x+19, y+30, screen, "./spritesheets/bullet2.png", enemy, bullet_list)
 
     def move(self):
         self.y += 1
-
-    def delete(self):
-        self.bullet_list.remove(self)
 
 
 def key_control(hero_temp):
