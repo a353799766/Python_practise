@@ -4,6 +4,7 @@
 import pygame
 import time
 from pygame.locals import *  # 用来检测事件，比如键盘按键操作
+import random
 
 
 class Hero(object):
@@ -17,22 +18,15 @@ class Hero(object):
         self.image = pygame.image.load(
             "./spritesheets/hero_fly_1.png")  # 创建一个我方飞机的图片，和上面一样
 
-    # 在窗口显示飞机
+    # 在窗口显示飞机，并显示射击子弹
     def display(self):
         self.screen.blit(self.image, (self.x, self.y))
-        # ⽤来存放需要删除的对象引⽤
-        needDelItemList = []
-        # 保存需要删除的对象
-        for i in self.bullet_list:
-            if i.judge():
-                needDelItemList.append(i)
-        # 删除self.bulletList中需要删除的对象
-        for i in needDelItemList:
-            self.bullet_list.remove(i)
         # 显示子弹,为什么写在这里，而不是写在shoot方法里,如果写在shoot里，只会显示一次就消失
         for bullet in self.bullet_list:
             bullet.display()
             bullet.move()
+            if bullet.y < 0:
+                bullet.delete()  # 调用删除子弹的方法
 
     # 以下4个方法是控制上下左右
     def move_right(self):
@@ -49,33 +43,7 @@ class Hero(object):
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
-        self.bullet_list.append(Bullets(self.screen, self.x, self.y))
-
-
-class Bullets(object):
-    """定义子弹类"""
-
-    def __init__(self, screen, x, y):
-        # x，y经过下方计算后，子弹才会在飞机的正上方显示
-        self.x = x + 34
-        self.y = y - 20
-        self.screen = screen
-        self.image = pygame.image.load(
-            "./spritesheets/bullet1.png")  # 创建一个子弹图片，和上面一样
-
-    def display(self):
-        """显示子弹"""
-        self.screen.blit(self.image, (self.x, self.y))
-
-    def move(self):
-        """通过while和空格键控制移动子弹"""
-        self.y -= 5
-
-    def judge(self):
-        if self.y < 0:
-            return True
-        else:
-            return False
+        self.bullet_list.append(Bullets(self.screen, self.x, self.y, self, self.bullet_list))
 
 
 class Enemy(object):
@@ -88,10 +56,16 @@ class Enemy(object):
         self.image = pygame.image.load(
             "./spritesheets/enemy1_fly_1.png")  # 创建一个地方飞机的图片，和上面一样
         self.position = "right"
+        self.bullet_list = []
 
     # 在窗口显示飞机
     def display(self):
         self.screen.blit(self.image, (self.x, self.y))
+        for bullet in self.bullet_list:
+            bullet.display()
+            bullet.move()
+            if bullet.y > 540:
+                bullet.delete()  # 调用删除子弹的方法
 
     def move(self):
         """移动敌机，并判断敌机的边界值"""
@@ -105,6 +79,62 @@ class Enemy(object):
             self.position = "left"
         elif self.x < 0:
             self.position = "right"
+
+    def shoot(self):
+        # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
+        # 利用random来控制发射子弹
+        random_num = random.randint(1, 400)
+        if random_num == 32 or random_num == 111:
+            self.bullet_list.append(EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
+
+
+class Bullets(object):
+    """定义我方飞机子弹类"""
+
+    def __init__(self, screen, x, y, hero, bullet_list):
+        # x，y经过下方计算后，子弹才会在飞机的正上方显示
+        self.x = x + 34
+        self.y = y - 20
+        self.screen = screen
+        self.image = pygame.image.load(
+            "./spritesheets/bullet1.png")  # 创建一个子弹图片，和上面一样
+        self.hero = hero
+        self.bullet_list = bullet_list
+
+    def display(self):
+        """显示子弹"""
+        self.screen.blit(self.image, (self.x, self.y))
+
+    def move(self):
+        """通过while和空格键控制移动子弹"""
+        self.y -= 5
+
+    def delete(self):
+        self.bullet_list.remove(self)
+
+
+class EnemyBullets(object):
+    """定义敌方飞机子弹类"""
+
+    def __init__(self, screen, x, y, enemy, bullet_list):
+        # x，y经过下方计算后，子弹才会在飞机的正上方显示
+        self.x = x + 19
+        self.y = y + 30
+        self.screen = screen
+        self.image = pygame.image.load(
+            "./spritesheets/bullet2.png")  # 创建一个子弹图片，和上面一样
+        self.enemy = enemy
+        self.bullet_list = bullet_list
+
+    def display(self):
+        """显示子弹"""
+        self.screen.blit(self.image, (self.x, self.y))
+
+    def move(self):
+        self.y += 1
+
+    def delete(self):
+        self.bullet_list.remove(self)
 
 
 def key_control(hero_temp):
@@ -149,8 +179,9 @@ def main():
         # 我方飞机英雄显示
         hero.display()
         # 敌方飞机显示
-        enemy.move()
         enemy.display()
+        enemy.move()
+        enemy.shoot()
         # 获取事件，比如按键等
         key_control(hero)
         # 更新需要显示的内容
