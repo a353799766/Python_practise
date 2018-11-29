@@ -26,7 +26,11 @@ class Hero(BasePlane):
 
     def __init__(self, screen, enemy_temp):
         BasePlane.__init__(self, 140, 488, screen, "./spritesheets/hero_fly_1.png")
-        self.enemy =enemy_temp
+        self.enemy = enemy_temp
+        self.key_right_status = False
+        self.key_left_status = False
+        self.key_up_status = False
+        self.key_down_status = False
 
     # 在窗口显示飞机，并显示射击子弹
     def display(self):
@@ -39,17 +43,15 @@ class Hero(BasePlane):
                 bullet.delete()  # 调用删除子弹的方法
 
     # 以下4个方法是控制上下左右
-    def move_right(self):
-        self.x += 5
-
-    def move_left(self):
-        self.x -= 5
-
-    def move_down(self):
-        self.y += 5
-
-    def move_up(self):
-        self.y -= 5
+    def move(self):
+        if self.key_right_status:
+            self.x += 3
+        if self.key_left_status:
+            self.x -= 3
+        if self.key_down_status:
+            self.y += 3
+        if self.key_up_status:
+            self.y -= 3
 
     def shoot(self):
         # 创建子弹对象,对象有三个属性，并保存在列表中。注意这里并没有在main函数里创建子弹
@@ -94,11 +96,11 @@ class Enemy(BasePlane):
                     EnemyBullets(self.screen, self.x, self.y, self, self.bullet_list))
 
     def delete(self):
-        # 在窗口外显示,并停止移动
+        # 在窗口外显示,并停止移动，让flag等于其他数
         self.x = -100
         self.y = -100
         self.flag = 1
-        # 取消发射子弹
+
 
 class BaseBullet(object):
     def __init__(self, x, y, screen, image_path, plane_temp, bullet_list):
@@ -122,17 +124,21 @@ class Bullets(BaseBullet):
     def __init__(self, screen, x, y, hero, bullet_list, enemy_temp):
         BaseBullet.__init__(self, x + 34, y - 20, screen, "./spritesheets/bullet1.png", hero, bullet_list)
         self.enemy = enemy_temp
+        self.count = 0
 
     def move(self):
         """通过while和空格键控制移动子弹"""
         self.y -= 3
+        self.count += 1
         # 判断子弹的xy对应飞机的xy
         if self.x< self.enemy.x+38 and self.x > self.enemy.x and self.y>self.enemy.y and self.y<self.enemy.y+84:
             # 子弹消失，从子弹列表中删除
             BaseBullet.delete(self)
             # 爆炸效果，加载敌机的爆炸图
             self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_1.png")
+            self.count = 10
             self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_2.png")
+
             self.enemy.image = pygame.image.load("./spritesheets/enemy1_blowup_3.png")
             # 敌机消失,敌机的加载图片消失
             self.enemy.delete()
@@ -158,22 +164,27 @@ def key_control(hero_temp):
         elif event.type == KEYDOWN:
             # 检测按键是否是a或者left
             if event.key == K_a or event.key == K_LEFT:
-                print('left')
-                hero_temp.move_left()
+                hero_temp.key_left_status = True
             # 检测按键是否是d或者方向键right
             elif event.key == K_d or event.key == K_RIGHT:
-                print('right')
-                hero_temp.move_right()
+                hero_temp.key_right_status = True
             elif event.key == K_w or event.key == K_UP:
-                print('up')
-                hero_temp.move_up()
+                hero_temp.key_up_status = True
             elif event.key == K_s or event.key == K_DOWN:
-                print('down')
-                hero_temp.move_down()
+                hero_temp.key_down_status = True
             # 检测按键是否是空格键
             elif event.key == K_SPACE:
-                print('space')
                 hero_temp.shoot()  # 这里应该是飞机.显示子弹方法（）
+        elif event.type == KEYUP:
+            if event.key == K_a or event.key == K_LEFT:
+                hero_temp.key_left_status = False
+                # 检测按键是否是d或者方向键right
+            elif event.key == K_d or event.key == K_RIGHT:
+                hero_temp.key_right_status = False
+            elif event.key == K_w or event.key == K_UP:
+                hero_temp.key_up_status = False
+            elif event.key == K_s or event.key == K_DOWN:
+                hero_temp.key_down_status = False
 
 
 def main():
@@ -194,6 +205,7 @@ def main():
         enemy.shoot()
         # 获取事件，比如按键等
         key_control(hero)
+        hero.move()
         # 更新需要显示的内容
         pygame.display.update()
         time.sleep(0.01)
